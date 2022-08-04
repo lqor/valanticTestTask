@@ -1,8 +1,10 @@
 public with sharing class StringGeneratorCallout {
     
-    public static final Map<String, String> REQUEST_VALUES_MAP = new Map<String, String> {
+    public static final String URL_BASE_RANDOM_ORG = 'callout:StringGenerator';
+    public static final Integer MAX_LENGTH = 20;
+
+    public static Map<String, String> requestValuesMap = new Map<String, String> {
         'num' => '1',
-        'len' => '20',
         'digits' => 'on',
         'upperalpha' => 'on',
         'loweralpha' => 'on',
@@ -11,14 +13,18 @@ public with sharing class StringGeneratorCallout {
         'rnd' => 'new'
     };
 
-    public static final String URL_BASE_RANDOM_ORG = 'https://www.random.org/strings/?';
-
     /**
-     * This method is used as a part of ... process. It is called from ... and the returned values is displayed ...
+     * This method is used as a part of random string generation process. It is called from the LWC component 
+     * and the returned values is displayed in the response field in this component.
      * 
-     * @return      Body of the response. Can be null.
+     * @param accountId     If of the account from LWC component. Can be null.
+     * @return              Body of the response. Can be null.
      */
-    public String doStringRandomizerCallout(){
+    @AuraEnabled
+    public static String doStringRandomizerCallout(Id accountId){
+        Account account = queryAccountById(accountId);
+        addStringLengthToTheMap(account.Name);
+
         HttpRequest request = createRequest();
 
         Http http = new Http();
@@ -27,7 +33,18 @@ public with sharing class StringGeneratorCallout {
         return response.getBody();
     }
 
-    private HttpRequest createRequest() {
+    private static Account queryAccountById(Id accountId) {
+        return [SELECT Id, Name FROM Account WHERE Id = :accountId LIMIT 1];
+    }
+
+    private static void addStringLengthToTheMap(String accountName) {
+        Integer nameLength = accountName.length();
+        String stringLength = String.valueOf(nameLength < 20 ? nameLength : MAX_LENGTH);
+
+        requestValuesMap.put('len', stringLength);
+    }
+
+    private static HttpRequest createRequest() {
         HttpRequest request = new HttpRequest();
 
         String url = constructUrlForCallout();
@@ -38,11 +55,11 @@ public with sharing class StringGeneratorCallout {
         return request;
     }
 
-    private String constructUrlForCallout() {
-        String url = URL_BASE_RANDOM_ORG;
+    private static String constructUrlForCallout() {
+        String url = URL_BASE_RANDOM_ORG + '?';
 
-        for(String parameter : REQUEST_VALUES_MAP.keySet()) {
-            url += parameter + '=' + REQUEST_VALUES_MAP.get(parameter) + '&';
+        for(String parameter : requestValuesMap.keySet()) {
+            url += parameter + '=' + requestValuesMap.get(parameter) + '&';
         }
 
         url = url.removeEnd('&');

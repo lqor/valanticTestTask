@@ -1,11 +1,22 @@
 <template>
-    <div>
-        <lightning-record-edit-form record-id={recordId} object-api-name="Account">
-            <lightning-messages></lightning-messages>
-            <lightning-input-field field-name="Name"></lightning-input-field> 
-        </lightning-record-edit-form>
-        <lightning-input label="Response" value={clickedButtonLabel}></lightning-input>
-        <lightning-input label="Trigger" type="checkbox"></lightning-input>
-        <lightning-button variant="brand" label="Randomized" title="Primary action" onclick={handleRandomized}></lightning-button>
-    </div>
+    <template if:true={isLoading}>
+        <div class="slds-is-relative" style="min-height: 10vh;">
+            <lightning-spinner alternative-text="Loading..." size="medium">
+            </lightning-spinner>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <div>
+            <lightning-record-edit-form record-id={recordId} object-api-name={objectApiName} onsubmit={handleSubmit}>
+                <lightning-input-field field-name="Name"></lightning-input-field> 
+                
+                <lightning-input label="Response" value={randomName} disabled="true" ></lightning-input>
+                <lightning-input label="Trigger" type="checkbox" value={isTrigger} onchange={toggleCheckbox}></lightning-input>
+
+                <lightning-button label="Randomized" title="Primary action" onclick={handleRandomized}></lightning-button>
+                <lightning-button label="Override Value" type="submit" class="slds-m-left_x-small"></lightning-button>
+            </lightning-record-edit-form>
+        </div>
+    </template>
 </template>
